@@ -1,0 +1,56 @@
+{
+  "name": "slack-listener",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/slack-listener/src",
+  "projectType": "application",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/esbuild:esbuild",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "platform": "node",
+        "outputPath": "dist/apps/slack-listener",
+        "format": ["cjs"],
+        "bundle": false,
+        "main": "apps/slack-listener/src/main.ts",
+        "tsConfig": "apps/slack-listener/tsconfig.app.json",
+        "assets": ["apps/slack-listener/src/assets"],
+        "generatePackageJson": true,
+        "esbuildOptions": {
+          "sourcemap": true,
+          "outExtension": {
+            ".js": ".js"
+          }
+        }
+      },
+      "configurations": {
+        "development": {},
+        "production": {
+          "esbuildOptions": {
+            "sourcemap": false,
+            "outExtension": {
+              ".js": ".js"
+            }
+          }
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "slack-listener:build"
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "slack-listener:build:development"
+        },
+        "production": {
+          "buildTarget": "slack-listener:build:production"
+        }
+      }
+    }
+  }
+}
