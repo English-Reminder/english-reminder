@@ -1,0 +1,46 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Debug slack-listener",
+            "cwd": "${workspaceFolder}",
+            "runtimeExecutable": "nx",
+            "runtimeArgs": [
+                "run",
+                "slack-listener:serve",
+                "--inspect"
+            ],
+            "skipFiles": [
+                "<node_internals>/**",
+                "${workspaceFolder}/node_modules/*"
+            ],
+            "outFiles": [
+                "${workspaceFolder}/dist/**/*.js"
+            ],
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Debug common",
+            "cwd": "${workspaceFolder}",
+            "runtimeExecutable": "nx",
+            "runtimeArgs": [
+                "run",
+                "common:serve",
+                "--inspect"
+            ],
+            "skipFiles": [
+                "<node_internals>/**",
+                "${workspaceFolder}/node_modules/*"
+            ],
+            "outFiles": [
+                "${workspaceFolder}/dist/**/*.js"
+            ],
+        }
+    ]
+}
