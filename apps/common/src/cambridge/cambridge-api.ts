@@ -1,8 +1,10 @@
 import axios, { AxiosResponse } from "axios"
 import { retry, RetryStategy } from "../retry"
 import {CAMBRIDGE_LOGIN_HOST, CAMBRIDGE_LOGIN_PORT_PATH, CAMBRIDGE_LOGIN_UI_PATH} from "./cambridge-constant"
-import { parse } from 'cookie'
+import * as cookie from 'cookie'
 import { stringify } from "qs"
+import logger  from "../logger"
+
 interface CambridgeAPI {
     login: (username: string, password: string) => Promise<CambridgeLoginUserResponse|CambridgeAPIError>
     fetchWordListMetadata: (cookie: Map<string, string>) => BigInteger
@@ -73,9 +75,10 @@ class CambridgeAPIImpl implements CambridgeAPI {
                     "cookie": "gig3pctest=true",
                     "Referer": "https://cdns.eu1.gigya.com/",
                     "Referrer-Policy": "strict-origin-when-cross-origin"
-                }
+                },
+                timeout: 10000
             }), 3, 1, RetryStategy.ExponentialBackOff)
-            return COOKIE_NEEDED.map(key => `${key}=${parse(response.headers["set-cookie"].join(';'))[key]}`).join("; ")
+            return COOKIE_NEEDED.map(key => `${key}=${cookie.parse(response.headers["set-cookie"].join(';'))[key]}`).join("; ")
         } catch (err) {
             return CambridgeAPIError.GetCookieFromUIError
         }
@@ -83,7 +86,6 @@ class CambridgeAPIImpl implements CambridgeAPI {
     _loginUsingCookie = async (username: string, password: string, cookieStr: string) => {
         try {
             const response: AxiosResponse<CambridgeLoginSimpleResponse> = await retry(() => {
-                console.log(`${CAMBRIDGE_LOGIN_HOST}/${CAMBRIDGE_LOGIN_PORT_PATH}`)
                 return axios.post(`${CAMBRIDGE_LOGIN_HOST}/${CAMBRIDGE_LOGIN_PORT_PATH}`, 
                 stringify({
                     loginID: username,
@@ -123,12 +125,14 @@ class CambridgeAPIImpl implements CambridgeAPI {
                         "Referrer-Policy": "strict-origin-when-cross-origin",
                         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
                     },
+                    timeout: 10000
                     // validateStatus: function (status) {
                     //     return status == 200 || status == 403
                     // },
                 
                 })
             }, 3, 2, RetryStategy.ConstBackoff)
+            
             return response.data
         } catch(err) {
             return CambridgeAPIError.UnknownLoginError
@@ -148,7 +152,10 @@ class CambridgeAPIImpl implements CambridgeAPI {
             return CambridgeAPIError.InvalidUsernameOrPasswordError   
         }
         const _loginInfo = loginInfo as CambridgeLoginUserResponse;
-        console.log(_loginInfo.sessionInfo.login_token)
+        logger.debug(_loginInfo.sessionInfo.login_token)
+        logger.debug(_loginInfo.userInfo.UID)
+        logger.debug(_loginInfo.userInfo.UIDSignature)
+        logger.debug(_loginInfo.userInfo.UIDSig)
         return _loginInfo
 
     }
@@ -159,5 +166,6 @@ class CambridgeAPIImpl implements CambridgeAPI {
 export {
     CambridgeAPI,
     CambridgeAPIImpl,
-    CambridgeAPIError
+    CambridgeAPIError,
+    CambridgeLoginUserResponse
 }

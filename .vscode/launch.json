@@ -9,8 +9,9 @@
             "request": "launch",
             "name": "Debug slack-listener",
             "cwd": "${workspaceFolder}",
-            "runtimeExecutable": "nx",
+            "runtimeExecutable": "yarn",
             "runtimeArgs": [
+                "nx",
                 "run",
                 "slack-listener:serve",
                 "--inspect"
@@ -28,15 +29,16 @@
             "request": "launch",
             "name": "Debug common",
             "cwd": "${workspaceFolder}",
-            "runtimeExecutable": "nx",
+            "runtimeExecutable": "yarn",
             "runtimeArgs": [
+                "nx",
                 "run",
                 "common:serve",
                 "--inspect"
             ],
             "skipFiles": [
-                "<node_internals>/**",
-                "${workspaceFolder}/node_modules/*"
+                // "<node_internals>/**",
+                // "${workspaceFolder}/node_modules/*"
             ],
             "outFiles": [
                 "${workspaceFolder}/dist/**/*.js"
