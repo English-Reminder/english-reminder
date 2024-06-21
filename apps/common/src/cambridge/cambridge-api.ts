@@ -44,7 +44,7 @@ interface UserInfo {
     UID: string,
     UIDSig: string,
     UIDSignature: string,
-
+    signatureTimestamp: number
 }
 
 interface UserSessionInfo {
@@ -238,20 +238,18 @@ class CambridgeAPIImpl implements CambridgeAPI {
         if (E.isLeft(userInfo)) {
             return userInfo
         }
-        const sessionToken = await this._getSessionFromLoginTokenAndSignatureID(old_session.login_token, userInfo.right)
+        const sessionToken = await this._getSessionFromLoginTokenAndSignatureID(old_session.login_token, userInfo.right, userInfo.right.signatureTimestamp)
         if (E.isLeft(sessionToken)) {
             return sessionToken
         }
-
-        
-        // if userInfo 
+        return sessionToken
     }
 
-    _getSessionFromLoginTokenAndSignatureID = async (loginToken: string, userInfo: UserInfo): Promise<E.Either<CambridgeAPIError, string>> => {
+    _getSessionFromLoginTokenAndSignatureID = async (loginToken: string, userInfo: UserInfo, signature_timestamp: number): Promise<E.Either<CambridgeAPIError, string>> => {
         try {
             const response = await retry(
             () => 
-                axios.get<string>(`https://dictionary.cambridge.org/auth/gauth/save?UUID=${userInfo.UID}&timestamp=${Math.floor(Date.now()/1000)}&UIDSignature=${encodeURIComponent(userInfo.UIDSignature)}&remember=false`, {
+                axios.get<string>(`https://dictionary.cambridge.org/auth/gauth/save?UUID=${userInfo.UID}&timestamp=${signature_timestamp}&UIDSignature=${encodeURIComponent(userInfo.UIDSignature)}&remember=false`, {
                     "headers": {
                         "accept": "*/*",
                         "accept-language": "vi,en;q=0.9,en-GB;q=0.8,en-US;q=0.7",
@@ -274,8 +272,9 @@ class CambridgeAPIImpl implements CambridgeAPI {
                 2,
                 RetryStategy.ConstBackoff
             )
-            if (cookie.parse(response.headers["set-cookie"].join(';'))["JSESSIONID"]) {
-                return E.right(response.data)
+            const cookieParsed = cookie.parse(response.headers["set-cookie"].join(';'))["JSESSIONID"]
+            if (cookieParsed) {
+                return E.right(cookieParsed)
             } else
                 return E.left(CambridgeAPIError.CantGetSessionTokenFromSetCookie)
         } catch(err) {
