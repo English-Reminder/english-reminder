@@ -9,7 +9,7 @@ import { pipe } from "fp-ts/lib/function"
 
 interface CambridgeAPI {
     login: (username: string, password: string) => Promise<E.Either<CambridgeAPIError, CambridgeLoginUserResponse>>
-    fetchWordListMetadata: (cookie: Map<string, string>) => BigInteger
+    // fetchWordListMetadata: (cookie: Map<string, string>) => BigInteger
     fetchWordListDetail: (cookie: Map<string, string>, wordListId: BigInteger) => BigInteger
 }
 
@@ -18,7 +18,9 @@ enum CambridgeAPIError {
     InvalidUsernameOrPasswordError,
     UnknownLoginError,
     GetUserInfoFromGigyaError,
-    GetSessionTokenError
+    GetSessionTokenError,
+    CantGetSessionTokenFromSetCookie,
+    UnauthorizedError
 }
 
 interface CambridgeLoginSimpleResponse {
@@ -47,8 +49,11 @@ interface UserInfo {
 
 interface UserSessionInfo {
     login_token: string,
-    expires_in: string
+    expires_in: string,
+    login_ui_cookie: LoginUICookie
 }
+
+type LoginUICookie = string
 interface CambridgeLoginUserResponse extends CambridgeLoginSimpleResponse{
     profile: Profile,
     sessionInfo: UserSessionInfo,
@@ -56,13 +61,22 @@ interface CambridgeLoginUserResponse extends CambridgeLoginSimpleResponse{
     verifiedTimestamp: number
 }
 
-
+interface WordListMetadata {
+    id: number,
+    count: number,
+    shared: boolean,
+    creationDate: number,
+    modificationDate: number,
+    name: string,
+    userId: string,
+}
 
 const COOKIE_NEEDED = ["gmid", "ucid", "hasGmid"]
 class CambridgeAPIImpl implements CambridgeAPI {
+    temp = ''
     _getUILoginCookie = async (): Promise<E.Either<CambridgeAPIError, string>> => {
         try {
-            const response = await retry(() => axios.get(`${CAMBRIDGE_LOGIN_HOST}/${CAMBRIDGE_LOGIN_UI_PATH}`, {
+            const response = await retry(() => axios.get(`${CAMBRIDGE_LOGIN_HOST}/${CAMBRIDGE_LOGIN_UI_PATH}?apiKey=4_5rnY1vVhTXaiyHmFSwS_Lw&pageURL=https%3A%2F%2Fdictionary.cambridge.org%2F&sdk=js_latest&sdkBuild=${CAMBRIDGE_SDK_BUILD}&format=json`, {
                 // withCredentials: true,
                 headers: {
                     "accept": "*/*",
@@ -82,6 +96,8 @@ class CambridgeAPIImpl implements CambridgeAPI {
                 },
                 timeout: 10000
             }), 3, 1, RetryStategy.ExponentialBackOff)
+            if (!this.temp)
+                this.temp = COOKIE_NEEDED.map(key => `${key}=${cookie.parse(response.headers["set-cookie"].join(';'))[key]}`).join("; ")
             return E.right(COOKIE_NEEDED.map(key => `${key}=${cookie.parse(response.headers["set-cookie"].join(';'))[key]}`).join("; "))
         } catch (err) {
             return E.left(CambridgeAPIError.GetCookieFromUIError)
@@ -106,7 +122,7 @@ class CambridgeAPIImpl implements CambridgeAPI {
                     sdk: "js_latest",
                     authMode: "cookie",
                     pageURL: "https://dictionary.cambridge.org/",
-                    sdkBuild: 15936,
+                    sdkBuild: CAMBRIDGE_SDK_BUILD,
                     format: "json"
                 }),
                 {
@@ -136,7 +152,6 @@ class CambridgeAPIImpl implements CambridgeAPI {
                 
                 })
             }, 3, 2, RetryStategy.ConstBackoff)
-            
             return E.right(response.data)
         } catch(err) {
             return E.left(CambridgeAPIError.UnknownLoginError)
@@ -156,6 +171,7 @@ class CambridgeAPIImpl implements CambridgeAPI {
             return E.left(CambridgeAPIError.InvalidUsernameOrPasswordError)
         }
         const _loginInfo = loginInfo.right as CambridgeLoginUserResponse;
+        _loginInfo.sessionInfo.login_ui_cookie = cookieString.right
         logger.debug(_loginInfo.sessionInfo.login_token)
         logger.debug(_loginInfo.userInfo.UID)
         logger.debug(_loginInfo.userInfo.UIDSignature)
@@ -163,21 +179,15 @@ class CambridgeAPIImpl implements CambridgeAPI {
         return E.right(_loginInfo)
 
     }
-    getUserInfo = async (login_token: string): Promise<E.Either<CambridgeAPIError, UserInfo>> => {
-        
-        const cookieString = await this._getUILoginCookie();
-        if (E.isLeft(cookieString)) {
-            return cookieString
-        }
-
-        const userInfo = await this._getUserInfo(login_token, cookieString.right)
+    getUserInfo = async (user_session: UserSessionInfo): Promise<E.Either<CambridgeAPIError, UserInfo>> => {
+        const userInfo = await this._getUserInfo(user_session)
         if (E.isLeft(userInfo)) {
             return userInfo
         }
         return userInfo
     }
-    _getUserInfo = async (login_token: string, cookie: string): Promise<E.Either<CambridgeAPIError, UserInfo>> => {
-        let data = new FormData()
+    _getUserInfo = async (user_session: UserSessionInfo): Promise<E.Either<CambridgeAPIError, UserInfo>> => {
+        const data = new FormData()
         data.append("enabledProviders", "*")
         data.append("signIDs", "true")
         data.append("APIKey", CAMBRIDGE_API_KEY)
@@ -187,9 +197,9 @@ class CambridgeAPIImpl implements CambridgeAPI {
         data.append("pageURL", `${CAMBRIDGE_DICTIONARY_HOST}/`)
         data.append("sdkBuild", CAMBRIDGE_SDK_BUILD)
         data.append("format", "json")
-        data.append("login_token", login_token)
+        data.append("login_token", user_session.login_token)
         try {
-            let response = await retry(
+            const response = await retry(
                 () => axios.post<UserInfo>("https://socialize.eu1.gigya.com/socialize.getUserInfo",
                     data,
                     {
@@ -206,9 +216,10 @@ class CambridgeAPIImpl implements CambridgeAPI {
                             "sec-fetch-dest": "empty",
                             "sec-fetch-mode": "cors",
                             "sec-fetch-site": "same-site",
-                            "cookie": cookie,
+                            "cookie": user_session.login_ui_cookie,
                             "Referer": "https://cdns.eu1.gigya.com/",
-                            "Referrer-Policy": "strict-origin-when-cross-origin"
+                            "Referrer-Policy": "strict-origin-when-cross-origin",
+                            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
                         }
                     }
                 ),
@@ -216,49 +227,66 @@ class CambridgeAPIImpl implements CambridgeAPI {
                 2,
                 RetryStategy.ConstBackoff
             )
+            // if (response.data as any)['statusCode'] == 403
             return E.right(response.data)
         } catch(err) {
             return E.left(CambridgeAPIError.GetUserInfoFromGigyaError)
         }
     }
-    getSessionFromLoginToken = async (login_token: string): Promise<E.Either<CambridgeAPIError, string>> => {
-        let userInfo = this.getUserInfo(login_token)
+    getNewJSessionTokenFromOldSession = async (old_session: UserSessionInfo): Promise<E.Either<CambridgeAPIError, string>> => {
+        const userInfo = await this.getUserInfo(old_session)
+        if (E.isLeft(userInfo)) {
+            return userInfo
+        }
+        const sessionToken = await this._getSessionFromLoginTokenAndSignatureID(old_session.login_token, userInfo.right)
+        if (E.isLeft(sessionToken)) {
+            return sessionToken
+        }
+
+        
         // if userInfo 
     }
 
-    _getSessionFromLoginTokenAndCookie = async (login_token: string, userInfo: UserInfo) => {
+    _getSessionFromLoginTokenAndSignatureID = async (loginToken: string, userInfo: UserInfo): Promise<E.Either<CambridgeAPIError, string>> => {
         try {
-            let response = await retry(
-            () => axios.get(`https://dictionary.cambridge.org/auth/gauth/save?UUID=${userInfo.UID}&timestamp=${Math.floor(Date.now()/1000)}&UIDSignature=${encodeURIComponent(userInfo.UIDSignature)}&remember=true`, {
-                "headers": {
-                    "accept": "*/*",
-                    "accept-language": "vi,en;q=0.9,en-GB;q=0.8,en-US;q=0.7",
-                    "cache-control": "no-cache",
-                    "pragma": "no-cache",
-                    "sec-ch-ua": "\"Microsoft Edge\";v=\"125\", \"Chromium\";v=\"125\", \"Not.A/Brand\";v=\"24\"",
-                    "sec-ch-ua-mobile": "?0",
-                    "sec-ch-ua-platform": "\"Windows\"",
-                    "sec-fetch-dest": "empty",
-                    "sec-fetch-mode": "cors",
-                    "sec-fetch-site": "same-origin",
-                    "x-requested-with": "XMLHttpRequest",
-                    "cookie": `gig_bootstrap_4_5rnY1vVhTXaiyHmFSwS_Lw=_gigya_ver4; glt_4_5rnY1vVhTXaiyHmFSwS_Lw=${login_token}`,
-                    "Referer": "https://dictionary.cambridge.org/vi/auth/signin?rid=amp-fkXV9TQQEJJSCtZbZqv7bA&return=https%3A%2F%2Fcdn.ampproject.org%2Fv0%2Famp-login-done-0.1.html%3Furl%3Dhttps%253A%252F%252Fdictionary.cambridge.org%252Fvi%252Fdictionary%252Fenglish%252Ffiat",
-                    "Referrer-Policy": "strict-origin-when-cross-origin",
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 Edg/126.0.0.0"
-                },
-              }),
-              3,
-              2,
-              RetryStategy.ConstBackoff
+            const response = await retry(
+            () => 
+                axios.get<string>(`https://dictionary.cambridge.org/auth/gauth/save?UUID=${userInfo.UID}&timestamp=${Math.floor(Date.now()/1000)}&UIDSignature=${encodeURIComponent(userInfo.UIDSignature)}&remember=false`, {
+                    "headers": {
+                        "accept": "*/*",
+                        "accept-language": "vi,en;q=0.9,en-GB;q=0.8,en-US;q=0.7",
+                        "cache-control": "no-cache",
+                        "pragma": "no-cache",
+                        "sec-ch-ua": "\"Microsoft Edge\";v=\"125\", \"Chromium\";v=\"125\", \"Not.A/Brand\";v=\"24\"",
+                        "sec-ch-ua-mobile": "?0",
+                        "sec-ch-ua-platform": "\"Windows\"",
+                        "sec-fetch-dest": "empty",
+                        "sec-fetch-mode": "cors",
+                        "sec-fetch-site": "same-origin",
+                        "x-requested-with": "XMLHttpRequest",
+                        "cookie": `gig_bootstrap_4_5rnY1vVhTXaiyHmFSwS_Lw=_gigya_ver4; glt_4_5rnY1vVhTXaiyHmFSwS_Lw=${loginToken}`,
+                        "Referer": "https://dictionary.cambridge.org/vi/auth/signin?rid=amp-fkXV9TQQEJJSCtZbZqv7bA&return=https%3A%2F%2Fcdn.ampproject.org%2Fv0%2Famp-login-done-0.1.html%3Furl%3Dhttps%253A%252F%252Fdictionary.cambridge.org%252Fvi%252Fdictionary%252Fenglish%252Ffiat",
+                        "Referrer-Policy": "strict-origin-when-cross-origin",
+                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 Edg/126.0.0.0"
+                    },
+                }),
+                3,
+                2,
+                RetryStategy.ConstBackoff
             )
-            return E.right(response)
+            if (cookie.parse(response.headers["set-cookie"].join(';'))["JSESSIONID"]) {
+                return E.right(response.data)
+            } else
+                return E.left(CambridgeAPIError.CantGetSessionTokenFromSetCookie)
         } catch(err) {
             return E.left(CambridgeAPIError.GetSessionTokenError)
         }
         
     }
-    fetchWordListMetadata: (cookie: Map<string, string>) => Uint8Array
+
+
+
+    // fetchWordListMetadata: (loginToken: string, sessionToken) => Promise<E.Either<CambridgeAPIError, Array<WordListMetadata>>>
     fetchWordListDetail: (cookie: Map<string, string>, wordListId: BigInteger) => Uint8Array
 }
 
