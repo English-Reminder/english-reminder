@@ -1,0 +1,46 @@
+.pr dictionary[data-id]: Các loại từ điển khác nhau
+	[].pr.entry-body__el: Các nghĩa khác nhau
+		.pos-header
+			.headword > .hw.dhw: main headword
+			.pos.dpos: main position
+			uk .dpron-i: UK Pronounciation
+			us .dpron-i: US Pronounciation
+		.pos-body
+			[]div.pr.dsense
+				.dsense_h (optional)
+					.hw.dsense_hw: headword (optional)
+					.pos.dsense_pos: position (optional)
+					.guideword.dsense_gw: guideword (optional)
+				.dsense_b (optional)
+					[].ddef_block
+						.ddef_h
+							.ddef-info > .epp-xref.dxref: cerf level (optional)
+							.ddef_d: definition
+						.ddef_b
+						
+							[].examp.dexamp: example
+							.see_also.dxref-w: (optional)
+								[].item: item of see_also
+					[].dphrase-block
+						.dphrase_h:
+							.dphrase-title: title of phrase
+						.dphrase_b
+							[].ddef_block:
+								.ddef_h
+									.ddef_d: definition of phrase
+								.ddef_b
+									[].examp.dexamp: example
+			div.xref.grammar
+				[].item
+					a[href]: path to grammar
+						.dx-h: header of grammar item
+						.dx-pos: explain of grammar item
+			div.xref.phrasal_verb
+				[]item
+					a[href]: path to phrasal verb
+
+
+#dataset-example
+	.degs
+		[].deg: example ỉtem
+							

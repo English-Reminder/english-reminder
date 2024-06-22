@@ -12,6 +12,7 @@
     "@types/lodash": "^4.17.5",
     "@types/qs": "^6.9.15",
     "axios": "^1.6.0",
+    "cheerio": "^1.0.0-rc.12",
     "fastify": "~4.13.0",
     "fastify-plugin": "~4.5.0",
     "fp-ts": "^2.16.6",

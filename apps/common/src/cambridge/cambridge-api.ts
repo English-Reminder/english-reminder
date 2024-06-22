@@ -1,16 +1,19 @@
 import axios, { AxiosResponse } from "axios"
 import { retry, RetryStategy } from "../retry"
-import {CAMBRIDGE_API_KEY, CAMBRIDGE_DICTIONARY_HOST, CAMBRIDGE_LOGIN_HOST, CAMBRIDGE_LOGIN_PORT_PATH, CAMBRIDGE_LOGIN_UI_PATH, CAMBRIDGE_SDK_BUILD} from "./cambridge-constant"
+    import {CAMBRIDGE_API_KEY, CAMBRIDGE_COOKIE_GIGYA_VER_KEY, CAMBRIDGE_COOKIE_GIGYA_VER_VALUE, CAMBRIDGE_DICTIONARY_HOST, CAMBRIDGE_LOGIN_HOST, CAMBRIDGE_LOGIN_PORT_PATH, CAMBRIDGE_LOGIN_TOKEN_COOKIE_KEY, CAMBRIDGE_LOGIN_UI_PATH, CAMBRIDGE_SDK_BUILD, WORDLIST_WORD_PER_PAGE} from "./cambridge-constant"
 import * as cookie from 'cookie'
 import { stringify } from "qs"
 import logger  from "../logger"
 import * as E from 'fp-ts/Either'
 import { pipe } from "fp-ts/lib/function"
+import * as cheerio from "cheerio"
+import { Option } from "fp-ts/lib/Option"
 
 interface CambridgeAPI {
     login: (username: string, password: string) => Promise<E.Either<CambridgeAPIError, CambridgeLoginUserResponse>>
     // fetchWordListMetadata: (cookie: Map<string, string>) => BigInteger
-    fetchWordListDetail: (cookie: Map<string, string>, wordListId: BigInteger) => BigInteger
+    fetchWordListDetail: (session_token, wordListId: WordListMetadata) => Promise<E.Either<CambridgeAPIError, Array<WordMetadata>>>,
+    fetchWordListMetadata: (loginToken: string, sessionToken: string) => Promise<E.Either<CambridgeAPIError, Array<WordListMetadata>>>
 }
 
 enum CambridgeAPIError {
@@ -20,8 +23,13 @@ enum CambridgeAPIError {
     GetUserInfoFromGigyaError,
     GetSessionTokenError,
     CantGetSessionTokenFromSetCookie,
-    UnauthorizedError
+    UnauthorizedError,
+    WordListMetadataEmptyString,
+    UnknownFetchWordListMetadatasError,
+    FetchWordDetailUnknownError,
+    FetchWordDetailNotFoundError
 }
+
 
 interface CambridgeLoginSimpleResponse {
     apiVersion: number,
@@ -69,6 +77,52 @@ interface WordListMetadata {
     modificationDate: number,
     name: string,
     userId: string,
+    wordlistEntries: [],
+    metadatas: any,
+    userMetadatas: any
+}
+
+interface WordMetadata {
+    "id": number,
+    "entryId": string,
+    "headword": string,
+    "senseId": string,
+    "dictCode": string,
+    "definition": string,
+    "metaData": null,
+    "pos": string,
+    "soundUK": string,
+    "soundUS": string,
+    "soundUKMp3": string,
+    "soundUKOgg": string,
+    "soundUSMp3": string,
+    "soundUSOgg": string,
+    "translation": string,
+    "wordlistId": number,
+    "entryUrl": string,
+    "cefrLevel": string,
+    "domain": string,
+    "gram": string,
+    "region": string,
+    "usage": string
+}
+
+interface Word {
+    headword: string,
+    ukPronounce: string,
+    usPronounce: string,
+    pos: string
+    definitions: [
+        cerfLevel: string,
+        position: string,
+        meaning: string,
+        examples: Array<string>,
+        dsenWord: Option<string>,
+        dsenPos: Option<string>,
+
+    ],
+
+
 }
 
 const COOKIE_NEEDED = ["gmid", "ucid", "hasGmid"]
@@ -249,7 +303,7 @@ class CambridgeAPIImpl implements CambridgeAPI {
         try {
             const response = await retry(
             () => 
-                axios.get<string>(`https://dictionary.cambridge.org/auth/gauth/save?UUID=${userInfo.UID}&timestamp=${signature_timestamp}&UIDSignature=${encodeURIComponent(userInfo.UIDSignature)}&remember=false`, {
+                axios.get<string>(`${CAMBRIDGE_DICTIONARY_HOST}/auth/gauth/save?UUID=${userInfo.UID}&timestamp=${signature_timestamp}&UIDSignature=${encodeURIComponent(userInfo.UIDSignature)}&remember=false`, {
                     "headers": {
                         "accept": "*/*",
                         "accept-language": "vi,en;q=0.9,en-GB;q=0.8,en-US;q=0.7",
@@ -262,8 +316,7 @@ class CambridgeAPIImpl implements CambridgeAPI {
                         "sec-fetch-mode": "cors",
                         "sec-fetch-site": "same-origin",
                         "x-requested-with": "XMLHttpRequest",
-                        "cookie": `gig_bootstrap_4_5rnY1vVhTXaiyHmFSwS_Lw=_gigya_ver4; glt_4_5rnY1vVhTXaiyHmFSwS_Lw=${loginToken}`,
-                        "Referer": "https://dictionary.cambridge.org/vi/auth/signin?rid=amp-fkXV9TQQEJJSCtZbZqv7bA&return=https%3A%2F%2Fcdn.ampproject.org%2Fv0%2Famp-login-done-0.1.html%3Furl%3Dhttps%253A%252F%252Fdictionary.cambridge.org%252Fvi%252Fdictionary%252Fenglish%252Ffiat",
+                        "cookie": `${CAMBRIDGE_COOKIE_GIGYA_VER_KEY}=${CAMBRIDGE_COOKIE_GIGYA_VER_VALUE}; ${CAMBRIDGE_LOGIN_TOKEN_COOKIE_KEY}=${loginToken}`,
                         "Referrer-Policy": "strict-origin-when-cross-origin",
                         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 Edg/126.0.0.0"
                     },
@@ -285,8 +338,107 @@ class CambridgeAPIImpl implements CambridgeAPI {
 
 
 
-    // fetchWordListMetadata: (loginToken: string, sessionToken) => Promise<E.Either<CambridgeAPIError, Array<WordListMetadata>>>
-    fetchWordListDetail: (cookie: Map<string, string>, wordListId: BigInteger) => Uint8Array
+    _fetchWordListMetadata = async (loginToken: string, sessionToken: string): Promise<E.Either<CambridgeAPIError, Array<WordListMetadata>>> => {
+        try {
+            let res = await retry(() => axios.get<Array<WordListMetadata>>(`${CAMBRIDGE_DICTIONARY_HOST}/vi/plus/myWordlists/getWordlists?page=1`, {
+                "headers": {
+                    "accept": "*/*",
+                    "accept-language": "vi-VN,vi;q=0.9,fr-FR;q=0.8,fr;q=0.7,en-US;q=0.6,en;q=0.5",
+                    "sec-ch-ua": "\"Not/A)Brand\";v=\"8\", \"Chromium\";v=\"126\", \"Google Chrome\";v=\"126\"",
+                    "sec-ch-ua-mobile": "?0",
+                    "sec-ch-ua-platform": "\"Windows\"",
+                    "sec-fetch-dest": "empty",
+                    "sec-fetch-mode": "cors",
+                    "sec-fetch-site": "same-origin",
+                    "x-requested-with": "XMLHttpRequest",
+                    "cookie": `hasloggedin=1; JSESSIONID=${sessionToken}`,
+                    "Referer": `${CAMBRIDGE_DICTIONARY_HOST}/vi/plus/myWordlists`,
+                    "Referrer-Policy": "strict-origin-when-cross-origin",
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 Edg/126.0.0.0"
+                },
+            }), 3, 2, RetryStategy.LinearBackoff)
+            if (res.data.toString() == "") {
+                return E.left(CambridgeAPIError.WordListMetadataEmptyString)
+            }
+            return E.right(res.data)
+        } catch {
+            return E.left(CambridgeAPIError.UnknownFetchWordListMetadatasError)
+        }
+        
+    }
+
+    fetchWordListMetadata = async (loginToken: string, sessionToken: string): Promise<E.Either<CambridgeAPIError, Array<WordListMetadata>>> => {
+        let result = await this._fetchWordListMetadata(loginToken, sessionToken)
+        return result
+    }
+
+
+    fetchWordListDetail = async (sessionToken: string, wordListMetadata: WordListMetadata): Promise<E.Either<CambridgeAPIError, Array<WordMetadata>>> => {
+        const totalPage = !wordListMetadata.count ? 0 : (wordListMetadata.count - 1)/WORDLIST_WORD_PER_PAGE
+        let wordMetadatas = []
+        for (let i = 0; i < totalPage; i++) {
+            const res = await this._fetchWordListPage(sessionToken, wordListMetadata, i)
+            if (E.isLeft(res)) {
+                return res
+            } else {
+                wordMetadatas.push(res.right)
+            }
+        }
+        return E.right(wordMetadatas)
+    }
+
+    _fetchWordListPage = async (session_token: string, wordListMetadata: WordListMetadata, pageNumber: number): Promise<E.Either<CambridgeAPIError, Array<WordMetadata>>> => {
+        let response = await retry(() => axios.get<Array<WordMetadata>>(`${CAMBRIDGE_DICTIONARY_HOST}/vi/plus/wordlist/${wordListMetadata.id}/entries/${pageNumber}/`, {
+            "headers": {
+              "accept": "*/*",
+              "accept-language": "vi-VN,vi;q=0.9,fr-FR;q=0.8,fr;q=0.7,en-US;q=0.6,en;q=0.5",
+              "sec-ch-ua": "\"Not/A)Brand\";v=\"8\", \"Chromium\";v=\"126\", \"Google Chrome\";v=\"126\"",
+              "sec-ch-ua-mobile": "?0",
+              "sec-ch-ua-platform": "\"Windows\"",
+              "sec-fetch-dest": "empty",
+              "sec-fetch-mode": "cors",
+              "sec-fetch-site": "same-origin",
+              "x-requested-with": "XMLHttpRequest",
+              "cookie": `JSESSIONID=${session_token}`,
+              "Referer": "https://dictionary.cambridge.org/vi/plus/wordlist/78693196_ielts-2",
+              "Referrer-Policy": "strict-origin-when-cross-origin",
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 Edg/126.0.0.0"
+            },
+          }), 3, 2, RetryStategy.LinearBackoff)
+        return E.right(response.data)
+    }
+
+    fetchWordDetail = async (headword: string): Promise<E.Either<CambridgeAPIError, string>> => {
+        let response: AxiosResponse<string>;
+        try {
+            response = await retry(() => axios.get<string>(`${CAMBRIDGE_DICTIONARY_HOST}/vi/dictionary/english/${headword}`, {
+                "headers": {
+                  "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+                  "accept-language": "vi,en;q=0.9,en-GB;q=0.8,en-US;q=0.7",
+                  "cache-control": "no-cache",
+                  "pragma": "no-cache",
+                  "sec-ch-ua": "\"Not/A)Brand\";v=\"8\", \"Chromium\";v=\"126\", \"Microsoft Edge\";v=\"126\"",
+                  "sec-ch-ua-mobile": "?0",
+                  "sec-ch-ua-platform": "\"Windows\"",
+                  "sec-fetch-dest": "document",
+                  "sec-fetch-mode": "navigate",
+                  "sec-fetch-site": "none",
+                  "sec-fetch-user": "?1",
+                  "upgrade-insecure-requests": "1",
+                  "cookie": "preferredDictionaries=\"english,british-grammar,english-french,french-english\"",
+                  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 Edg/126.0.0.0"
+                },
+              }), 3, 2, RetryStategy.LinearBackoff);
+        } catch(e) {
+            return E.left(CambridgeAPIError.FetchWordDetailUnknownError)
+        }
+        if (response.status == 302) {
+            return E.left(CambridgeAPIError.FetchWordDetailNotFoundError)
+        }
+        
+        let html = cheerio.load(response.data)
+
+    }
 }
 
 export {
@@ -295,3 +447,12 @@ export {
     CambridgeAPIError,
     CambridgeLoginUserResponse
 }
+
+
+// headword: document.querySelectorAll(".headword")[0]
+// pronounciation UK: $(".uk.dpron-i .ipa")[0].innerText
+// pronounciation US: $(".us.dpron-i .ipa")[0].innerText
+// pos: $(".pos.dpos")
+// meaning: $(".def.ddef_d.db")[0]
+// example: $(".examp.dexamp")
+// extended_example: $("#dataset-example .deg")
