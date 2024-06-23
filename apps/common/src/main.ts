@@ -9,8 +9,19 @@ import * as E from 'fp-ts/Either'
     const c = b as E.Right<CambridgeLoginUserResponse>
     // const sessionInfo = c.right.sessionInfo
     // const sessionToken = await a.getNewJSessionTokenFromOldSession(sessionInfo)
-    const sessionToken = await a._getSessionFromLoginTokenAndSignatureID(c.right.sessionInfo.login_token, c.right.userInfo)
-    console.log(sessionToken)
+    // console.log(sessionToken)
+    
+    
+    // const sessionToken = await a._getSessionFromLoginTokenAndSignatureID(c.right.sessionInfo.login_token, c.right.userInfo, c.right.userInfo.signatureTimestamp)
+    // console.log(sessionToken)
+    // if (E.isRight(sessionToken))
+    //     console.log(await a.fetchWordListMetadata(c.right.sessionInfo.login_token, sessionToken.right))
+
+    // a.fetchWordDetail("take")
+
+    const data = fs.readFileSync('/home/bach/english-reminder/apps/common/src/test.html', 'utf-8')
+    const e = scrapeWord(data)
+    console.log(e)
 }())
 
 

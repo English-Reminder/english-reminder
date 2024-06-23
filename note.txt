@@ -1,4 +1,4 @@
-.pr dictionary[data-id]: Các loại từ điển khác nhau
+.[]pr dictionary[data-id]: Các loại từ điển khác nhau
 	[].pr.entry-body__el: Các nghĩa khác nhau
 		.pos-header
 			.headword > .hw.dhw: main headword
@@ -12,34 +12,34 @@
 					.pos.dsense_pos: position (optional)
 					.guideword.dsense_gw: guideword (optional)
 				.dsense_b (optional)
-					[].ddef_block
+					[].ddef_block[data-wl-senseid]: senseID of definition
 						.ddef_h
 							.ddef-info > .epp-xref.dxref: cerf level (optional)
 							.ddef_d: definition
 						.ddef_b
-						
 							[].examp.dexamp: example
 							.see_also.dxref-w: (optional)
 								[].item: item of see_also
+									a[href]: path to word of see also
 							.xref.synonyms [[or synonym]]
 								[].item: item of synonyms
 									a[href]: path to synonym
-							.dusagenote.usagenote.daccord
-								.text: note about usage of this definition
+							[].daccord.fs16: thesauruses
+								.daccord_lt: topic
+								.daccord_lb
+									[] .had > a: thesaurus
+									   .example.dexample: example
 					[].dphrase-block
 						.dphrase_h:
 							.dphrase-title: title of phrase
 						.dphrase_b
-							[].ddef_block:
+							[].ddef_block[data-wl-senseid]: senseid of definition
 								.ddef_h
 									.ddef_info:
 										.epp-xref.dxref: cerf level of phrase
 									.ddef_d: definition of phrase
 								.ddef_b
 									[].examp.dexamp: example
-					.daccord:not(.smartt)
-						[].eg.dexamp: more example
-				.smartt.daccord:
 			div.xref.grammar
 				[].item
 					a[href]: path to grammar
@@ -51,7 +51,6 @@
 			div.xref.idioms [[or idiom]]
 				[]item
 					a[href]: path to idiom + title
-
 
 #dataset-example
 	.degs

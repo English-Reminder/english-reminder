@@ -113,7 +113,7 @@ interface Word {
     headword: string,
     ukPronounce: string,
     usPronounce: string,
-    pos: string
+    position: string
     definitionGroups: [
         headword: string,
         position: string,
@@ -121,13 +121,28 @@ interface Word {
         definitions: [
             cerfLevel: string | null,
             definition: string,
+            senseID: string,
             examples: Array<string>,
-            seeAlso: Array<string>
+            synonyms: [
+                headword: string,
+                entry: string
+            ],
+            seeAlso: [
+                headword: string,
+                entry: string
+            ],
+            thesaureses: [
+                title: string,
+                words: [
+                    word: string,
+                    example: string
+                ]
+            ]
         ],
         phrases: [
             title: string,
             definition: string,
-            cerfLevel: string | null,
+            cerfLevel: string | null, 
             examples: Array<string>
         ],
 
@@ -476,7 +491,8 @@ export {
     CambridgeAPI,
     CambridgeAPIImpl,
     CambridgeAPIError,
-    CambridgeLoginUserResponse
+    CambridgeLoginUserResponse,
+    Word
 }
 
 
