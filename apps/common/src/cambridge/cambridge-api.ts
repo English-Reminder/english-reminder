@@ -108,20 +108,51 @@ interface WordMetadata {
 }
 
 interface Word {
+    // .pr dictionary[data-id]
+    dictionaryId: string
     headword: string,
     ukPronounce: string,
     usPronounce: string,
     pos: string
-    definitions: [
-        cerfLevel: string,
+    definitionGroups: [
+        headword: string,
         position: string,
-        meaning: string,
+        guideword: string | null,
+        definitions: [
+            cerfLevel: string | null,
+            definition: string,
+            examples: Array<string>,
+            seeAlso: Array<string>
+        ],
+        phrases: [
+            title: string,
+            definition: string,
+            cerfLevel: string | null,
+            examples: Array<string>
+        ],
+
+        grammars: [
+            title: string,
+            explain: string,
+            entry: string
+        ],
+
+
+        phrasal_verbs: [
+            title: string,
+            entry: string
+        ],
+
+        idioms: [
+            title: string,
+            entry: string
+        ],
+        
         examples: Array<string>,
-        dsenWord: Option<string>,
-        dsenPos: Option<string>,
-
+        // dsenWord: Option<string>,
+        // dsenPos: Option<string>,
     ],
-
+    extended_examples: Array<string>
 
 }
 
@@ -340,7 +371,7 @@ class CambridgeAPIImpl implements CambridgeAPI {
 
     _fetchWordListMetadata = async (loginToken: string, sessionToken: string): Promise<E.Either<CambridgeAPIError, Array<WordListMetadata>>> => {
         try {
-            let res = await retry(() => axios.get<Array<WordListMetadata>>(`${CAMBRIDGE_DICTIONARY_HOST}/vi/plus/myWordlists/getWordlists?page=1`, {
+            const res = await retry(() => axios.get<Array<WordListMetadata>>(`${CAMBRIDGE_DICTIONARY_HOST}/vi/plus/myWordlists/getWordlists?page=1`, {
                 "headers": {
                     "accept": "*/*",
                     "accept-language": "vi-VN,vi;q=0.9,fr-FR;q=0.8,fr;q=0.7,en-US;q=0.6,en;q=0.5",
@@ -368,14 +399,14 @@ class CambridgeAPIImpl implements CambridgeAPI {
     }
 
     fetchWordListMetadata = async (loginToken: string, sessionToken: string): Promise<E.Either<CambridgeAPIError, Array<WordListMetadata>>> => {
-        let result = await this._fetchWordListMetadata(loginToken, sessionToken)
+        const result = await this._fetchWordListMetadata(loginToken, sessionToken)
         return result
     }
 
 
     fetchWordListDetail = async (sessionToken: string, wordListMetadata: WordListMetadata): Promise<E.Either<CambridgeAPIError, Array<WordMetadata>>> => {
         const totalPage = !wordListMetadata.count ? 0 : (wordListMetadata.count - 1)/WORDLIST_WORD_PER_PAGE
-        let wordMetadatas = []
+        const wordMetadatas = []
         for (let i = 0; i < totalPage; i++) {
             const res = await this._fetchWordListPage(sessionToken, wordListMetadata, i)
             if (E.isLeft(res)) {
@@ -388,7 +419,7 @@ class CambridgeAPIImpl implements CambridgeAPI {
     }
 
     _fetchWordListPage = async (session_token: string, wordListMetadata: WordListMetadata, pageNumber: number): Promise<E.Either<CambridgeAPIError, Array<WordMetadata>>> => {
-        let response = await retry(() => axios.get<Array<WordMetadata>>(`${CAMBRIDGE_DICTIONARY_HOST}/vi/plus/wordlist/${wordListMetadata.id}/entries/${pageNumber}/`, {
+        const response = await retry(() => axios.get<Array<WordMetadata>>(`${CAMBRIDGE_DICTIONARY_HOST}/vi/plus/wordlist/${wordListMetadata.id}/entries/${pageNumber}/`, {
             "headers": {
               "accept": "*/*",
               "accept-language": "vi-VN,vi;q=0.9,fr-FR;q=0.8,fr;q=0.7,en-US;q=0.6,en;q=0.5",
@@ -436,7 +467,7 @@ class CambridgeAPIImpl implements CambridgeAPI {
             return E.left(CambridgeAPIError.FetchWordDetailNotFoundError)
         }
         
-        let html = cheerio.load(response.data)
+        const html = cheerio.load(response.data)
 
     }
 }

@@ -21,23 +21,36 @@
 							[].examp.dexamp: example
 							.see_also.dxref-w: (optional)
 								[].item: item of see_also
+							.xref.synonyms [[or synonym]]
+								[].item: item of synonyms
+									a[href]: path to synonym
+							.dusagenote.usagenote.daccord
+								.text: note about usage of this definition
 					[].dphrase-block
 						.dphrase_h:
 							.dphrase-title: title of phrase
 						.dphrase_b
 							[].ddef_block:
 								.ddef_h
+									.ddef_info:
+										.epp-xref.dxref: cerf level of phrase
 									.ddef_d: definition of phrase
 								.ddef_b
 									[].examp.dexamp: example
+					.daccord:not(.smartt)
+						[].eg.dexamp: more example
+				.smartt.daccord:
 			div.xref.grammar
 				[].item
 					a[href]: path to grammar
 						.dx-h: header of grammar item
 						.dx-pos: explain of grammar item
-			div.xref.phrasal_verb
+			div.xref.phrasal_verbs [[or phrasal_verb]]
 				[]item
-					a[href]: path to phrasal verb
+					a[href]: path to phrasal verb + title
+			div.xref.idioms [[or idiom]]
+				[]item
+					a[href]: path to idiom + title
 
 
 #dataset-example
