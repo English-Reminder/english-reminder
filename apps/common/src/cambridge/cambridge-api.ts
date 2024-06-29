@@ -141,31 +141,35 @@ interface Word {
         ],
         phrases: [
             title: string,
-            definition: string,
+            definitions: [
+                senseID: string,
+                cerfLevel: string|null,
+                definition: string,
+                example: Array<string>
+            ],
             cerfLevel: string | null, 
             examples: Array<string>
         ],
-
-        grammars: [
-            title: string,
-            explain: string,
-            entry: string
-        ],
-
-
-        phrasal_verbs: [
-            title: string,
-            entry: string
-        ],
-
-        idioms: [
-            title: string,
-            entry: string
-        ],
-        
         examples: Array<string>,
         // dsenWord: Option<string>,
         // dsenPos: Option<string>,
+    ],
+    
+    grammars: [
+        title: string,
+        explain: string,
+        entry: string
+    ],
+
+
+    phrasal_verbs: [
+        title: string,
+        entry: string
+    ],
+
+    idioms: [
+        title: string,
+        entry: string
     ],
     extended_examples: Array<string>
 

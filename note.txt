@@ -25,7 +25,7 @@
 								[].item: item of synonyms
 									a[href]: path to synonym
 							[].daccord.fs16: thesauruses
-								.daccord_lt: topic
+								.daccord_lt: title
 								.daccord_lb
 									[] .had > a: thesaurus
 									   .example.dexample: example

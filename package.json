@@ -9,6 +9,7 @@
     "@fastify/sensible": "~5.2.0",
     "@slack/bolt": "^3.18.0",
     "@types/cookie": "^0.6.0",
+    "@types/html-minifier": "^4.0.5",
     "@types/lodash": "^4.17.5",
     "@types/qs": "^6.9.15",
     "axios": "^1.6.0",
@@ -16,6 +17,8 @@
     "fastify": "~4.13.0",
     "fastify-plugin": "~4.5.0",
     "fp-ts": "^2.16.6",
+    "html-minifier": "^4.0.0",
+    "node-html-parser": "^6.1.13",
     "tslib": "^2.3.0",
     "vue": "^3.3.4",
     "winston": "^3.13.0"

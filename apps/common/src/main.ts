@@ -2,11 +2,15 @@ import axios from 'axios';
 import { retry } from './retry'
 import { CambridgeAPIImpl, CambridgeLoginUserResponse } from './cambridge/cambridge-api';
 import * as E from 'fp-ts/Either'
+import * as fs from 'fs'
+import { scrapeWord } from './cambridge/cambridge-scrape';
+import * as htmlminifier from 'html-minifier'
+import { parse, HTMLElement } from 'node-html-parser';
 (async function test () {
     const a = new CambridgeAPIImpl()
 
-    const b = await a.login("test@icloud.com", "test")
-    const c = b as E.Right<CambridgeLoginUserResponse>
+    // const b = await a.login("test@icloud.com", "test")
+    // const c = b as E.Right<CambridgeLoginUserResponse>
     // const sessionInfo = c.right.sessionInfo
     // const sessionToken = await a.getNewJSessionTokenFromOldSession(sessionInfo)
     // console.log(sessionToken)
@@ -18,9 +22,15 @@ import * as E from 'fp-ts/Either'
     //     console.log(await a.fetchWordListMetadata(c.right.sessionInfo.login_token, sessionToken.right))
 
     // a.fetchWordDetail("take")
+    
+    const data = fs.readFileSync('/Users/bach_tx/Desktop/self/english-reminder/english-reminder/apps/common/src/TAKE _ English meaning - Cambridge Dictionary.html', 'utf-8')
+    const result = htmlminifier.minify(data, {
 
-    const data = fs.readFileSync('/home/bach/english-reminder/apps/common/src/test.html', 'utf-8')
-    const e = scrapeWord(data)
+    });
+    // const test = `<div class="def ddef_d db">to <a class="query" href="https://dictionary.cambridge.org/dictionary/english/remove" title="remove" rel="">remove</a> something, <a class="query" href="https://dictionary.cambridge.org/dictionary/english/especially" title="especially" rel="">especially</a> without <a class="query" href="https://dictionary.cambridge.org/dictionary/english/permission" title="permission" rel="">permission</a>: </div>`
+    // const parsed = parse(test)
+    // parsed.textContent
+    const e = scrapeWord(result)
     console.log(e)
 }())
 
