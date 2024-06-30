@@ -9,11 +9,15 @@ import { pipe } from "fp-ts/lib/function"
 import * as cheerio from "cheerio"
 import { Option } from "fp-ts/lib/Option"
 
-interface CambridgeAPI {
+interface ICambridgeAPI {
     login: (username: string, password: string) => Promise<E.Either<CambridgeAPIError, CambridgeLoginUserResponse>>
     // fetchWordListMetadata: (cookie: Map<string, string>) => BigInteger
     fetchWordListDetail: (session_token, wordListId: WordListMetadata) => Promise<E.Either<CambridgeAPIError, Array<WordMetadata>>>,
     fetchWordListMetadata: (loginToken: string, sessionToken: string) => Promise<E.Either<CambridgeAPIError, Array<WordListMetadata>>>
+}
+
+interface ICambridgeWordParser {
+    parser: (data: any) => Array<Word>
 }
 
 enum CambridgeAPIError {
@@ -27,8 +31,10 @@ enum CambridgeAPIError {
     WordListMetadataEmptyString,
     UnknownFetchWordListMetadatasError,
     FetchWordDetailUnknownError,
-    FetchWordDetailNotFoundError
+    FetchWordDetailNotFoundError,
+    ParseWordDetailError
 }
+
 
 
 interface CambridgeLoginSimpleResponse {
@@ -111,8 +117,8 @@ interface Word {
     // .pr dictionary[data-id]
     dictionaryId: string
     headword: string,
-    ukPronounce: string,
-    usPronounce: string,
+    ukPronounce: string | null,
+    usPronounce: string | null,
     position: string
     definitionGroups: [
         headword: string,
@@ -150,7 +156,6 @@ interface Word {
             cerfLevel: string | null, 
             examples: Array<string>
         ],
-        examples: Array<string>,
         // dsenWord: Option<string>,
         // dsenPos: Option<string>,
     ],
@@ -162,7 +167,7 @@ interface Word {
     ],
 
 
-    phrasal_verbs: [
+    phrasalVerbs: [
         title: string,
         entry: string
     ],
@@ -171,13 +176,18 @@ interface Word {
         title: string,
         entry: string
     ],
-    extended_examples: Array<string>
+    extendedExamples: Array<string>
 
 }
 
 const COOKIE_NEEDED = ["gmid", "ucid", "hasGmid"]
-class CambridgeAPIImpl implements CambridgeAPI {
+class CambridgeAPIImpl implements ICambridgeAPI {
+    wordParser: ICambridgeWordParser
     temp = ''
+
+    constructor(wordParser: ICambridgeWordParser) {
+        this.wordParser = wordParser
+    }
     _getUILoginCookie = async (): Promise<E.Either<CambridgeAPIError, string>> => {
         try {
             const response = await retry(() => axios.get(`${CAMBRIDGE_LOGIN_HOST}/${CAMBRIDGE_LOGIN_UI_PATH}?apiKey=4_5rnY1vVhTXaiyHmFSwS_Lw&pageURL=https%3A%2F%2Fdictionary.cambridge.org%2F&sdk=js_latest&sdkBuild=${CAMBRIDGE_SDK_BUILD}&format=json`, {
@@ -458,7 +468,7 @@ class CambridgeAPIImpl implements CambridgeAPI {
         return E.right(response.data)
     }
 
-    fetchWordDetail = async (headword: string): Promise<E.Either<CambridgeAPIError, string>> => {
+    fetchWordDetail = async (headword: string): Promise<E.Either<CambridgeAPIError, Array<Word>>> => {
         let response: AxiosResponse<string>;
         try {
             response = await retry(() => axios.get<string>(`${CAMBRIDGE_DICTIONARY_HOST}/vi/dictionary/english/${headword}`, {
@@ -480,23 +490,30 @@ class CambridgeAPIImpl implements CambridgeAPI {
                 },
               }), 3, 2, RetryStategy.LinearBackoff);
         } catch(e) {
+            logger.error(`Error when fetching http request of headword ${headword}. Error: ${e}`)
             return E.left(CambridgeAPIError.FetchWordDetailUnknownError)
         }
         if (response.status == 302) {
+            logger.error(`Got redirect when request headword ${headword}`)
             return E.left(CambridgeAPIError.FetchWordDetailNotFoundError)
         }
-        
-        const html = cheerio.load(response.data)
 
+        try {
+            return E.right(this.wordParser.parser(response.data))
+        } catch(e) {
+            logger.error(`Error when parsing data to get Array<Word> for headword ${headword}`)
+            return E.left(CambridgeAPIError.ParseWordDetailError)
+        }
     }
 }
 
 export {
-    CambridgeAPI,
+    ICambridgeAPI,
     CambridgeAPIImpl,
     CambridgeAPIError,
     CambridgeLoginUserResponse,
-    Word
+    Word,
+    ICambridgeWordParser
 }
 
 

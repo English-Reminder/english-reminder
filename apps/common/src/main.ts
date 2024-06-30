@@ -3,11 +3,12 @@ import { retry } from './retry'
 import { CambridgeAPIImpl, CambridgeLoginUserResponse } from './cambridge/cambridge-api';
 import * as E from 'fp-ts/Either'
 import * as fs from 'fs'
-import { scrapeWord } from './cambridge/cambridge-scrape';
+import { CambridgeScrapeWordParserImpl, scrapeWord } from './cambridge/cambridge-scrape';
 import * as htmlminifier from 'html-minifier'
 import { parse, HTMLElement } from 'node-html-parser';
+import { minify } from 'html-minifier'
 (async function test () {
-    const a = new CambridgeAPIImpl()
+    const a = new CambridgeAPIImpl(new CambridgeScrapeWordParserImpl())
 
     // const b = await a.login("test@icloud.com", "test")
     // const c = b as E.Right<CambridgeLoginUserResponse>
@@ -23,14 +24,16 @@ import { parse, HTMLElement } from 'node-html-parser';
 
     // a.fetchWordDetail("take")
     
-    const data = fs.readFileSync('/Users/bach_tx/Desktop/self/english-reminder/english-reminder/apps/common/src/TAKE _ English meaning - Cambridge Dictionary.html', 'utf-8')
-    const result = htmlminifier.minify(data, {
+    // const data = fs.readFileSync('/home/bach/english-reminder/apps/common/src/take', 'utf-8')
+    // const result = htmlminifier.minify(data, {
 
-    });
+    // });
+   
+    
     // const test = `<div class="def ddef_d db">to <a class="query" href="https://dictionary.cambridge.org/dictionary/english/remove" title="remove" rel="">remove</a> something, <a class="query" href="https://dictionary.cambridge.org/dictionary/english/especially" title="especially" rel="">especially</a> without <a class="query" href="https://dictionary.cambridge.org/dictionary/english/permission" title="permission" rel="">permission</a>: </div>`
     // const parsed = parse(test)
     // parsed.textContent
-    const e = scrapeWord(result)
+    const e = await a.fetchWordDetail("buy")
     console.log(e)
 }())
 
