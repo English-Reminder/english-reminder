@@ -69,7 +69,7 @@ function _scrapeEachDict(el: HTMLElement): Array<Word> {
             return _scrapeEachDef(el)
         })
 
-        const defGrammarsBlock = el.querySelectorAll("div.xref.grammar.item")
+        const defGrammarsBlock = el.querySelectorAll("div.xref.grammar .item")
         const grammars = defGrammarsBlock.map(el => {
             return {
                 title: el.querySelector(".dx-h").innerText,
@@ -149,7 +149,7 @@ function _scrapeEachDefBlock(el: HTMLElement) {
     const wordDefinition = el.querySelector(".ddef_h > .ddef_d").innerText
     el.querySelector(".ddef_h > .ddef_d").textContent
     const wordDefExamples = el.querySelectorAll(".ddef_b > .examp.dexamp").map(el => el.innerText)
-    const wordDefSeeAlso = el.querySelectorAll(".ddef_b > .see_also > .item").map(el => {
+    const wordDefSeeAlso = el.querySelectorAll(".ddef_b .see_also .item").map(el => {
         return {
             headword: el.innerText,
             entry: el.querySelector("a").getAttribute("href")

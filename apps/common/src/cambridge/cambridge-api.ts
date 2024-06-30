@@ -1,13 +1,10 @@
 import axios, { AxiosResponse } from "axios"
 import { retry, RetryStategy } from "../retry"
-    import {CAMBRIDGE_API_KEY, CAMBRIDGE_COOKIE_GIGYA_VER_KEY, CAMBRIDGE_COOKIE_GIGYA_VER_VALUE, CAMBRIDGE_DICTIONARY_HOST, CAMBRIDGE_LOGIN_HOST, CAMBRIDGE_LOGIN_PORT_PATH, CAMBRIDGE_LOGIN_TOKEN_COOKIE_KEY, CAMBRIDGE_LOGIN_UI_PATH, CAMBRIDGE_SDK_BUILD, WORDLIST_WORD_PER_PAGE} from "./cambridge-constant"
+import {CAMBRIDGE_API_KEY, CAMBRIDGE_COOKIE_GIGYA_VER_KEY, CAMBRIDGE_COOKIE_GIGYA_VER_VALUE, CAMBRIDGE_DICTIONARY_HOST, CAMBRIDGE_LOGIN_HOST, CAMBRIDGE_LOGIN_PORT_PATH, CAMBRIDGE_LOGIN_TOKEN_COOKIE_KEY, CAMBRIDGE_LOGIN_UI_PATH, CAMBRIDGE_SDK_BUILD, WORDLIST_WORD_PER_PAGE} from "./cambridge-constant"
 import * as cookie from 'cookie'
 import { stringify } from "qs"
-import logger  from "../logger"
+import { logger }  from "../logger"
 import * as E from 'fp-ts/Either'
-import { pipe } from "fp-ts/lib/function"
-import * as cheerio from "cheerio"
-import { Option } from "fp-ts/lib/Option"
 
 interface ICambridgeAPI {
     login: (username: string, password: string) => Promise<E.Either<CambridgeAPIError, CambridgeLoginUserResponse>>

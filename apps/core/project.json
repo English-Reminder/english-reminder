@@ -1,0 +1,19 @@
+{
+  "name": "core",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/core/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/core",
+        "main": "apps/core/src/index.ts",
+        "tsConfig": "apps/core/tsconfig.lib.json",
+        "assets": ["apps/core/*.md"]
+      }
+    }
+  }
+}
