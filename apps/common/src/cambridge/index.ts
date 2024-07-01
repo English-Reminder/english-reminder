@@ -1,2 +1,2 @@
-export * from './cambridge-api'
-export * from './cambridge-scrape'
+export * from './CambridgeAPI'
+export * from './ScrapeWordParser'

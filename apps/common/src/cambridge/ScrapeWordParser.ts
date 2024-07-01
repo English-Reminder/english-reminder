@@ -1,4 +1,4 @@
-import { ICambridgeWordParser, Word } from "./cambridge-api";
+import { ICambridgeWordParser, Word } from "./CambridgeAPI";
 import * as cheerio from 'cheerio'
 import { minify } from "html-minifier";
 import { parse, HTMLElement } from 'node-html-parser';
