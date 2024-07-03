@@ -5,4 +5,4 @@
       "@english-reminder/common": ["./apps/common/src/index.ts"]
     }
   }
-}
+} 
