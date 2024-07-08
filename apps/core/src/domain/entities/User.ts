@@ -8,7 +8,7 @@ class User {
     constructor(userID: string, userSlackID: string, userCambridgeID: string, cambridgeCredential: CambridgeCredential) {
         this.userID = userID;
         this.userSlackID = userSlackID;
-        this.userCambridgeID = userCambridgeID
-        this.cambridgeCredential = cambridgeCredential
+        this.userCambridgeID = userCambridgeID;
+        this.cambridgeCredential = cambridgeCredential;
     }
 }

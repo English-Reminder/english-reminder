@@ -1,5 +1,8 @@
-import { App, BlockElementAction, DialogSubmitAction, InteractiveAction } from '@slack/bolt'
+import { App, Block, BlockAction, BlockElementAction, DialogSubmitAction, InteractiveAction, SlackAction } from '@slack/bolt'
 import { parse } from 'cookie'
+import {LOGIN_MODAL_VIEW, LOGIN_MODAL_CONFIG } from './assets/slack-template/LoginModal';
+import HomeView from './assets/slack-template/HomeView';
+
 // import {} from '@english-reminder/core'
 const app = new App({
   clientId: process.env.CLIENT_ID,
@@ -18,88 +21,45 @@ const app = new App({
   console.log(process.env.CLIENT_ID)
   // Start the app
   await app.start();
-  app.event('app_home_opened', async ({ event, client, context }) => {
+  app.event('app_home_opened', async ({ event, client, payload, context }) => {
     try {
       // Call views.publish with the built-in client
       const result = await client.views.publish({
         // Use the user ID associated with the event
-        user_id: event.user,
-        view: {
-          type: 'home',
-          callback_id: 'home_view',
-          blocks: [
-            {
-              type: 'section',
-              text: {
-                type: 'mrkdwn',
-                text: 'Welcome to your _App\'s Home_! :tada:'
-              }
-            },
-            {
-              type: 'actions',
-              elements: [
-                {
-                  type: 'button',
-                  text: {
-                    type: 'plain_text',
-                    text: 'Open Modal'
-                  },
-                  action_id: 'open_modal'
-                }
-              ]
-            }
-          ]
-        }
+        user_id: payload.user,
+        view: HomeView
       });
       console.log(result);
     } catch (error) {
       console.error(error);
     }
   });
-  
+
   // Listen to the action (button click)
-  app.action('open_modal', async ({ body, ack, client, payload }) => {
+  app.action('open_modal', async ({ ack, client, body }) => {
     // Acknowledge the action
     await ack();
   
     try {
       // Call views.open with the built-in client
+      console.log(body)
       const result = await client.views.open({
-        trigger_id: "aaa",
-        view: {
-          type: 'modal',
-          callback_id: 'modal-identifier',
-          title: {
-            type: 'plain_text',
-            text: 'My App Modal'
-          },
-          blocks: [
-            {
-              type: 'section',
-              block_id: 'section-identifier',
-              text: {
-                type: 'mrkdwn',
-                text: 'This is a section block with a button.'
-              },
-              accessory: {
-                type: 'button',
-                text: {
-                  type: 'plain_text',
-                  text: 'Click Me'
-                },
-                action_id: 'button_click'
-              }
-            }
-          ],
-          submit: {
-            type: 'plain_text',
-            text: 'Submit'
-          }
-        }
+        trigger_id: (body as BlockAction).trigger_id,
+        view: LOGIN_MODAL_VIEW
       });
       console.log(result);
     } catch (error) {
       console.error(error);
     }
   });
+  
+  app.view(LOGIN_MODAL_CONFIG.SLACK_LOGIN_MODAL_CALLBACK_ID, async ({ ack, body, view }) => {
+    ack()
+    // console.log(view)
+    // console.log(body)
+    const username = body.view.state.values[LOGIN_MODAL_CONFIG.USERNAME_BLOCK_ID]
+    const password = body.view.state.values[LOGIN_MODAL_CONFIG.PASSWORD_BLOCK_ID]
+    console.log(username)
+    console.log(password)
+  })
 })()
