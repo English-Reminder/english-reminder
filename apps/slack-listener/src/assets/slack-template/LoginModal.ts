@@ -2,10 +2,15 @@ import { ModalView } from "@slack/bolt"
 const USERNAME_BLOCK_ID = "username-inp"
 const PASSWORD_BLOCK_ID = "password-inp"
 const SLACK_LOGIN_MODAL_CALLBACK_ID = "slack-login-modal-callback-id"
+const SLACK_USERNAME_INPUT_ACTION_ID = "username-inp-action-id"
+const SLACK_PASSWORD_INPUT_ACTION_ID = "password-inp-action-id"
+
 const LOGIN_MODAL_CONFIG = {
 	USERNAME_BLOCK_ID,
 	PASSWORD_BLOCK_ID,
-	SLACK_LOGIN_MODAL_CALLBACK_ID
+	SLACK_LOGIN_MODAL_CALLBACK_ID,
+	SLACK_USERNAME_INPUT_ACTION_ID,
+	SLACK_PASSWORD_INPUT_ACTION_ID
 }
 const LOGIN_MODAL_VIEW = {
 	"type": "modal",
@@ -64,5 +69,5 @@ const LOGIN_MODAL_VIEW = {
 
 export {
 	LOGIN_MODAL_VIEW,
-	LOGIN_MODAL_CONFIG
+	LOGIN_MODAL_CONFIG,
 }

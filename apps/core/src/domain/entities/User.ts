@@ -12,3 +12,7 @@ class User {
         this.cambridgeCredential = cambridgeCredential;
     }
 }
+
+export {
+    User
+}

@@ -7,3 +7,6 @@ class UserDTO {
         this.cambridgeUserID = cambridgeUserID
     }
 }
+export {
+    UserDTO
+}
