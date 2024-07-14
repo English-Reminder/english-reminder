@@ -1,4 +1,4 @@
-class SlackUserController implements UserController {
+class SlackUserController implements IUserController {
     loginCambridge(slackUserID: string, cambridgeUsername: string, cambridgePassword: string): void {
         throw new Error("Method not implemented.");
     }

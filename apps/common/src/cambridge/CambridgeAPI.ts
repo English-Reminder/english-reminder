@@ -9,7 +9,7 @@ import * as E from 'fp-ts/Either'
 interface ICambridgeAPI {
     login: (username: string, password: string) => Promise<E.Either<CambridgeAPIError, CambridgeLoginUserResponse>>
     // fetchWordListMetadata: (cookie: Map<string, string>) => BigInteger
-    fetchWordListDetail: (session_token, wordListId: WordListMetadata) => Promise<E.Either<CambridgeAPIError, Array<WordMetadata>>>,
+    fetchWordListDetail: (session_token: string, wordListId: WordListMetadata) => Promise<E.Either<CambridgeAPIError, Array<WordMetadata>>>,
     fetchWordListMetadata: (loginToken: string, sessionToken: string) => Promise<E.Either<CambridgeAPIError, Array<WordListMetadata>>>
 }
 

@@ -1,8 +1,10 @@
 {
   "compilerOptions": {
     "paths": {
-      "@english-reminder/core": ["./apps/core/src/index.ts"],
-      "@english-reminder/common": ["./apps/common/src/index.ts"]
-    }
-  }
+      "@english-reminder/core": ["../core/src/index.ts"],
+      "@english-reminder/common": ["./dist/apps/common/apps/common/src","../common/src/index.ts"],
+    },
+    "baseUrl": "."
+  },
+  // "include": ["src/**/**"]
 } 

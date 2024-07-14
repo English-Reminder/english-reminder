@@ -1,2 +1,2 @@
-export * from './ProducerMQ'
-export * from './UserPortOut'
+export * from './IProducerMQ'
+export * from './IUserRepository'

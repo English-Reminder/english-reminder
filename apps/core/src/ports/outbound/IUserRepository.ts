@@ -1,12 +1,14 @@
-import { CambridgeCredentialDTO, LoggingInStatus } from "../../adapters";
+import { Either } from "fp-ts/lib/Either";
+import { CambridgeCredentialDTO, LoggingInStatusDTO } from "../../adapters";
+import { ErrorDTO, GetLoginStatusErrorDTO } from "../../adapters/dtos/ErrorDTO";
 
-interface UserRepository {
-    saveCambridgeCredential(credential: CambridgeCredentialDTO): Promise<number>
-    getCambridgeCredentialStatus(slackUserID: string): Promise<LoggingInStatus>
-    lockCambridgeLogin(slackUserID: string): Promise<number>
-    releaseLockCambridgeLogin(slackUserID: string): Promise<number>
+interface IUserRepository {
+    saveCambridgeCredential(credential: CambridgeCredentialDTO): Promise<Either<ErrorDTO, unknown>>
+    getCambridgeCredentialStatus(slackUserID: string): Promise<Either<GetLoginStatusErrorDTO, LoggingInStatusDTO>>
+    // lockCambridgeLogin(slackUserID: string): Promise<number>
+    // releaseLockCambridgeLogin(slackUserID: string): Promise<number>
     
 }
 export {
-    UserRepository
+    IUserRepository
 }

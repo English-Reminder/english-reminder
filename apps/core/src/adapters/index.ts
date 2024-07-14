@@ -1,3 +1,3 @@
 export * from './dtos'
 // export * from './inbound'
-// export * from './outbound'
+export * from './outbound'

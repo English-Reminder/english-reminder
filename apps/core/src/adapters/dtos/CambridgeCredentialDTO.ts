@@ -9,13 +9,13 @@ class CambridgeCredentialDTO {
     }
 }
 
-enum LoggingInStatus {
+enum LoggingInStatusDTO {
     LoggedIn,
     LoggingIn,
 }
 
 export {
     CambridgeCredentialDTO,
-    LoggingInStatus
+    LoggingInStatusDTO
 }
 

@@ -1,5 +1,5 @@
 export * from './adapters'
-// export * from './domain'
+export * from './domain'
 export * from './infrastructure'
 export * from './ports'
 // export * from './use-cases'

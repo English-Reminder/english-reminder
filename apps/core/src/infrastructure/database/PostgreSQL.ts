@@ -1,17 +1,17 @@
 import { Pool } from 'pg';
 
-const pool = new Pool({
-  user: 'yourUsername',
-  host: 'localhost',
-  database: 'yourDatabaseName',
-  password: 'yourPassword',
-  port: 5432, // default port for PostgreSQL
+const pgPool = new Pool({
+  user: process.env['POSTGRESQL_USER'],
+  host: process.env['POSTGRESQL_HOST'],
+  database: process.env['POSTGRESQL_DATABASE'],
+  password: process.env['POSTGRESQL_PASSWORD'],
+  port: Number(process.env['POSTGRESQL_PORT']), // default port for PostgreSQL
 });
 
-const query = (text: string, params?: any[]) => pool.query(text, params);
+const pgQuery = (text: string, params?: any[]) => pgPool.query(text, params);
 
 
 export {
-    pool,
-    query
+    pgPool,
+    pgQuery
 }

@@ -1,5 +1,5 @@
 {
-  // "extends": "../../tsconfig.base.json",
+  "extends": "../../tsconfig.json",
   "files": [],
   "include": [],
   "references": [
@@ -12,6 +12,6 @@
   ],
   "compilerOptions": {
     "sourceMap": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
   }
 }

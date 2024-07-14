@@ -2,7 +2,9 @@ import { App, Block, BlockAction, BlockElementAction, DialogSubmitAction, Intera
 import { parse } from 'cookie'
 import {LOGIN_MODAL_VIEW, LOGIN_MODAL_CONFIG } from './assets/slack-template/LoginModal';
 import HomeView from './assets/slack-template/HomeView';
-import { CambridgeCredentialDTO } from '@english-reminder/core'
+import { CambridgeCredentialDTO, RedisProducer, UserRepositoryImpl } from '@english-reminder/core'
+import { UserServiceImpl, IUserService } from '@english-reminder/core'
+import { redis, pgPool } from '@english-reminder/core';
 // import {} from '@english-reminder/core'
 const app = new App({
   clientId: process.env.CLIENT_ID,
@@ -58,6 +60,9 @@ const app = new App({
     const username = body.view.state.values[LOGIN_MODAL_CONFIG.USERNAME_BLOCK_ID][LOGIN_MODAL_CONFIG.SLACK_USERNAME_INPUT_ACTION_ID].value
     const password = body.view.state.values[LOGIN_MODAL_CONFIG.PASSWORD_BLOCK_ID][LOGIN_MODAL_CONFIG.SLACK_PASSWORD_INPUT_ACTION_ID].value
     const credentialDTO = new CambridgeCredentialDTO(body.user.id, username, password)
-    
+    const redisMQ = new RedisProducer(redis)
+    const userRepository = new UserRepositoryImpl(redis, pgPool)
+    const service: IUserService = new UserServiceImpl(redisMQ, userRepository)
+    service.loginCambridge(credentialDTO)
   })
 })()
