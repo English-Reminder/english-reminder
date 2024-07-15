@@ -7,11 +7,11 @@ import { UserServiceImpl, IUserService } from '@english-reminder/core'
 import { redis, pgPool } from '@english-reminder/core';
 // import {} from '@english-reminder/core'
 const app = new App({
-  clientId: process.env.CLIENT_ID,
-  clientSecret: process.env.CLIENT_SECRET,
-  signingSecret: process.env.SLACK_SIGNING_SECRET,
-  token: process.env.SLACK_BOT_TOKEN,
-  appToken: process.env.SLACK_APP_TOKEN,
+  clientId: process.env['CLIENT_ID'],
+  clientSecret: process.env['CLIENT_SECRET'],
+  signingSecret: process.env['SLACK_SIGNING_SECRET'],
+  token: process.env['SLACK_BOT_TOKEN'],
+  appToken: process.env['SLACK_APP_TOKEN'],
   socketMode: true,
   port: 3000
 });
@@ -20,7 +20,7 @@ const app = new App({
 /* Add functionality here */
 
 (async () => {
-  console.log(process.env.CLIENT_ID)
+  console.log(process.env['CLIENT_ID'])
   // Start the app
   await app.start();
   app.event('app_home_opened', async ({ event, client, payload, context }) => {
@@ -59,7 +59,7 @@ const app = new App({
     ack()
     const username = body.view.state.values[LOGIN_MODAL_CONFIG.USERNAME_BLOCK_ID][LOGIN_MODAL_CONFIG.SLACK_USERNAME_INPUT_ACTION_ID].value
     const password = body.view.state.values[LOGIN_MODAL_CONFIG.PASSWORD_BLOCK_ID][LOGIN_MODAL_CONFIG.SLACK_PASSWORD_INPUT_ACTION_ID].value
-    const credentialDTO = new CambridgeCredentialDTO(body.user.id, username, password)
+    const credentialDTO = new CambridgeCredentialDTO(body.user.id, username!, password!)
     const redisMQ = new RedisProducer(redis)
     const userRepository = new UserRepositoryImpl(redis, pgPool)
     const service: IUserService = new UserServiceImpl(redisMQ, userRepository)

@@ -15,7 +15,8 @@
     "skipDefaultLibCheck": true,
     "paths": {
       "@english-reminder/common": ["apps/common/src/index.ts"],
-      "@english-reminder/core": ["apps/core/src/index.ts"]
+      "@english-reminder/core": ["apps/core/src/index.ts"],
+      "@english-reminder/slack-listener": ["apps/slack-listener/src/index.ts"]
     },
     "baseUrl": ".",
   },
