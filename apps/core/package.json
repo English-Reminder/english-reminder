@@ -2,7 +2,6 @@
   "name": "@english-reminder/core",
   "version": "0.0.1",
   "dependencies": {
-    "@types/pg": "^8.11.6",
     "tslib": "^2.3.0"
   },
   "type": "commonjs",
