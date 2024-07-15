@@ -42,7 +42,7 @@ const LOGIN_MODAL_VIEW = {
 			"type": "input",
 			"element": {
 				"type": "plain_text_input",
-				"action_id": "plain_text_input-action"
+				"action_id": SLACK_USERNAME_INPUT_ACTION_ID
 			},
 			"label": {
 				"type": "plain_text",
@@ -55,7 +55,7 @@ const LOGIN_MODAL_VIEW = {
 			"type": "input",
 			"element": {
 				"type": "plain_text_input",
-				"action_id": "plain_text_input-action"
+				"action_id": SLACK_PASSWORD_INPUT_ACTION_ID
 			},
 			"label": {
 				"type": "plain_text",

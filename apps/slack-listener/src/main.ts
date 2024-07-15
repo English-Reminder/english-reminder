@@ -57,6 +57,7 @@ const app = new App({
   
   app.view(LOGIN_MODAL_CONFIG.SLACK_LOGIN_MODAL_CALLBACK_ID, async ({ ack, body, view }) => {
     ack()
+    console.log(LOGIN_MODAL_CONFIG)
     const username = body.view.state.values[LOGIN_MODAL_CONFIG.USERNAME_BLOCK_ID][LOGIN_MODAL_CONFIG.SLACK_USERNAME_INPUT_ACTION_ID].value
     const password = body.view.state.values[LOGIN_MODAL_CONFIG.PASSWORD_BLOCK_ID][LOGIN_MODAL_CONFIG.SLACK_PASSWORD_INPUT_ACTION_ID].value
     const credentialDTO = new CambridgeCredentialDTO(body.user.id, username!, password!)
