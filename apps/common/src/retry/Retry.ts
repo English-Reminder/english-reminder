@@ -25,7 +25,7 @@ async function retry<T>(
     retryCondition = (res: T) => true): Promise<T> 
 {
     assert(retryTime > 0 && retryInitDuration > 0, "retryTime and retryInitDuration should greater or equal than 0. Got %d %d", retryTime, retryInitDuration)
-    let finalErr: RetryError = null
+    let finalErr: RetryError
     return new Promise((resolve, reject) => {
         let doCount = 0;
         function loopRecursive() {

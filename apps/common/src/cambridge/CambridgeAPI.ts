@@ -208,8 +208,8 @@ class CambridgeAPIImpl implements ICambridgeAPI {
                 timeout: 10000
             }), 3, 1, RetryStategy.ExponentialBackOff)
             if (!this.temp)
-                this.temp = COOKIE_NEEDED.map(key => `${key}=${cookie.parse(response.headers["set-cookie"].join(';'))[key]}`).join("; ")
-            return E.right(COOKIE_NEEDED.map(key => `${key}=${cookie.parse(response.headers["set-cookie"].join(';'))[key]}`).join("; "))
+                this.temp = COOKIE_NEEDED.map(key => `${key}=${cookie.parse(response.headers["set-cookie"]!.join(';'))[key]}`).join("; ")
+            return E.right(COOKIE_NEEDED.map(key => `${key}=${cookie.parse(response.headers["set-cookie"]!.join(';'))[key]}`).join("; "))
         } catch (err) {
             return E.left(CambridgeAPIError.GetCookieFromUIError)
         }
@@ -382,7 +382,7 @@ class CambridgeAPIImpl implements ICambridgeAPI {
                 2,
                 RetryStategy.ConstBackoff
             )
-            const cookieParsed = cookie.parse(response.headers["set-cookie"].join(';'))["JSESSIONID"]
+            const cookieParsed = cookie.parse(response.headers["set-cookie"]!.join(';'))["JSESSIONID"]
             if (cookieParsed) {
                 return E.right(cookieParsed)
             } else
@@ -432,13 +432,14 @@ class CambridgeAPIImpl implements ICambridgeAPI {
 
     fetchWordListDetail = async (sessionToken: string, wordListMetadata: WordListMetadata): Promise<E.Either<CambridgeAPIError, Array<WordMetadata>>> => {
         const totalPage = !wordListMetadata.count ? 0 : (wordListMetadata.count - 1)/WORDLIST_WORD_PER_PAGE
-        const wordMetadatas = []
+        const wordMetadatas: Array<WordMetadata> = []
         for (let i = 0; i < totalPage; i++) {
             const res = await this._fetchWordListPage(sessionToken, wordListMetadata, i)
             if (E.isLeft(res)) {
                 return res
             } else {
-                wordMetadatas.push(res.right)
+
+                wordMetadatas.push(...res.right)
             }
         }
         return E.right(wordMetadatas)

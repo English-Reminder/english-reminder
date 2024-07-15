@@ -60,8 +60,8 @@ function _scrapeEachDict(el: HTMLElement): Array<Word> {
     // Scrape each def group
     return el.querySelectorAll(".pr.entry-body__el").map(el => {
         // const $ = cheerio.load(el)
-        const mainHeadword = el.querySelector(".pos-header .headword .hw.dhw").innerText
-        const mainPosition = el.querySelector(".pos.dpos").innerText
+        const mainHeadword = el.querySelector(".pos-header .headword .hw.dhw")!.innerText
+        const mainPosition = el.querySelector(".pos.dpos")!.innerText
         const ukPronounciation = getTextOrNull(el, ".pos-header .uk.dpron-i .ipa.dipa")
         const usPronounciation = getTextOrNull(el, ".pos-header .us.dpron-i .ipa.dipa")
         const definitionEls = el.querySelectorAll("div.pr.dsense")
@@ -72,24 +72,24 @@ function _scrapeEachDict(el: HTMLElement): Array<Word> {
         const defGrammarsBlock = el.querySelectorAll("div.xref.grammar .item")
         const grammars = defGrammarsBlock.map(el => {
             return {
-                title: el.querySelector(".dx-h").innerText,
-                explain: el.querySelector("dx-pos").innerText,
-                entry: el.querySelector('a').getAttribute('href')
+                title: el.querySelector(".dx-h")!.innerText,
+                explain: el.querySelector("dx-pos")!.innerText,
+                entry: el.querySelector('a')!.getAttribute('href')
             }
         })
         const defIdiomsBlock = el.querySelectorAll("div.xref.idioms .item, div.xref.idiom .item")
         const idioms = defIdiomsBlock.map(el => {
             return {
-                title: el.querySelector("a").innerText,
-                entry: el.querySelector("a").getAttribute("href")
+                title: el.querySelector("a")!.innerText,
+                entry: el.querySelector("a")!.getAttribute("href")
             }
         })
         const phrasalVerbsBlock = el.querySelectorAll(".xref.phrasal_verbs .item, .xref.phrasal_verb .item")
         const phrasalVerb = phrasalVerbsBlock.map(el => {
             
             return {
-                title: el.querySelector("a").innerText,
-                entry: el.querySelector("a").getAttribute("href")
+                title: el.querySelector("a")!.innerText,
+                entry: el.querySelector("a")!.getAttribute("href")
             }
         })
         return {
@@ -123,12 +123,12 @@ function _scrapeEachDef(el: HTMLElement) {
     const defPhraseBlocks = el.querySelectorAll("dsense_b .dphrase-block")
     const defPhrases = defPhraseBlocks.map(el => {
         return {
-            title: el.querySelector(".dphrase-title").textContent,
+            title: el.querySelector(".dphrase-title")!.textContent,
             definitions: el.querySelectorAll(".dphrase_b .ddef_block").map(el => {
                 return {
                     senseID: el.getAttribute("data-wl-senseid"),
                     cerfLevel: getTextOrNull(el, ".epp-xef.dxref"),
-                    definition: el.querySelector(".ddef_d").textContent,
+                    definition: el.querySelector(".ddef_d")!.textContent,
                     examples: el.querySelectorAll(".examp.dexamp").map(_ => _.textContent)
                 }
             })
@@ -146,20 +146,20 @@ function _scrapeEachDef(el: HTMLElement) {
 function _scrapeEachDefBlock(el: HTMLElement) {
     const wordDefSenseID = el.getAttribute("data-wl-senseid")
     const wordDefCerfLevel = getTextOrNull(el, ".ddef-info > .epp-xref.dxref")
-    const wordDefinition = el.querySelector(".ddef_h > .ddef_d").innerText
-    el.querySelector(".ddef_h > .ddef_d").textContent
+    const wordDefinition = el.querySelector(".ddef_h > .ddef_d")!.innerText
+    el.querySelector(".ddef_h > .ddef_d")!.textContent
     const wordDefExamples = el.querySelectorAll(".ddef_b > .examp.dexamp").map(el => el.innerText)
     const wordDefSeeAlso = el.querySelectorAll(".ddef_b .see_also .item").map(el => {
         return {
             headword: el.innerText,
-            entry: el.querySelector("a").getAttribute("href")
+            entry: el.querySelector("a")!.getAttribute("href")
         }
     })
     const wordDefSynonyms = (
         el.querySelectorAll(".ddef_b > .xref.synonyms, .ddef_b > .xref.synonym").map(el => {
             return {
                 headword: el.innerText,
-                entry: el.querySelector("a").getAttribute("href")
+                entry: el.querySelector("a")!.getAttribute("href")
             }
         })
     )
@@ -167,11 +167,11 @@ function _scrapeEachDefBlock(el: HTMLElement) {
         el.querySelectorAll(".daccord.fs16").map(el => {
            
             return {
-                title: el.querySelector(".daccord_lt").innerText,
+                title: getTextOrNull(el, ".daccord_lt"),
                 words: el.querySelectorAll(".daccord_lb ul .had").map((el) => {
                     return {
-                        word: el.querySelector("a").innerText,
-                        example: el.querySelector(".example.dexample").innerText
+                        word: getTextOrNull(el, "a"),
+                        example: getTextOrNull(el, ".example.dexample")
                     }
                 })
             }
@@ -191,7 +191,7 @@ function _scrapeEachDefBlock(el: HTMLElement) {
 
 function getTextOrNull($: HTMLElement, cssSelector: string) {
     if ($.querySelector(cssSelector)) {
-        return $.querySelector(cssSelector).innerText
+        return $.querySelector(cssSelector)!.innerText
     } else return null
 }
 
